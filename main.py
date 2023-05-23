@@ -6,6 +6,7 @@ from collections import OrderedDict
 filepath = "./inputs/sample_input.json"
 
 # filepath = "./inputs/custom_input.json"
+# filepath = "./inputs/another_custom_input.json"
 
 
 # ============================ JSON Handlers ==============================
@@ -23,6 +24,7 @@ def print_json_object(json_object):
 def get_datatype_and_value(data_object):
   data_type = list(data_object.keys())[0]
   value = data_object[data_type]
+  data_type = data_type.strip()
 
   return data_type, value
 
@@ -55,7 +57,7 @@ def process_string(s):
 
 def process_number(s):
   if s == "":
-    return (False, s)
+    return (False, None)
 
   num = 0
   try:
@@ -70,7 +72,7 @@ def process_number(s):
   except ValueError:
     num = 0
 
-  return (False, num)
+  return (False, None)
 
 
 true_values = ["1", "t", "T", "TRUE", "true", "True"]
@@ -93,7 +95,7 @@ def process_null(s):
   if s in true_values:
     return (True, None)
   else:
-    return (False, s)
+    return (False, None)
 
 
 # DRY principle: This function is utilized in multiple places
@@ -113,7 +115,7 @@ def process_snb(data_type, output_value):
 
 def process_list(l):
   if not isinstance(l, list):
-    return (False, l)
+    return (False, None)
 
   output_data_list = []
 
@@ -154,7 +156,7 @@ def transform_json_object(input_json_object):
 
     data_type, value = get_datatype_and_value(data_object)
 
-    valid = True 
+    valid = True
 
     if data_type in ["N", "BOOL", "S"]:
       valid, casted_output_value = process_snb(data_type, value)
@@ -171,7 +173,7 @@ def transform_json_object(input_json_object):
   output_keys = list(output_json_object.keys())
 
   if len(output_keys) == 0:
-    return False, output_json_object
+    return (False, None)
 
   sorted_output_json_object = sort_map(output_json_object, output_keys)
 
