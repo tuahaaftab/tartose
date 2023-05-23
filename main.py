@@ -91,17 +91,33 @@ def process_null(s):
     return (False, s)
 
 
+def get_datatype_and_value(data_object):
+  data_type = list(data_object.keys())[0]
+  value = data_object[data_type]
+
+  return data_type, value
+
+
 # Process List
 def process_list(l):
   # Empty List | "L": "noop" | Expecting square brackets "L": ["noop"]
   if not isinstance(l, list):
     return (False, l)
 
-  # for elem in l:
-  #   if isinstance(elem, dict):
-  #     print(elem)
+  output_data_list = []
 
-  return (True, l)
+  for data_object in l:
+    if isinstance(data_object, dict):
+      data_type, value = get_datatype_and_value(data_object)
+      valid, casted_output_value = process_nbs(data_type, value)
+
+      if valid:
+        output_data_list.append(casted_output_value)
+
+  if len(output_data_list) == 0:
+    return (False, None)
+    
+  return (True, output_data_list)
 
 
 def process_nbs(data_type, output_value):
@@ -117,43 +133,48 @@ def process_nbs(data_type, output_value):
   return (False, None)
 
 
-# Main
+def transform_json_object(input_json_object):
 
-# transformed json object
-output_json_object = {}
+  output_json_object = {}
+
+  for key, data_object in input_json_object.items():
+
+    key = key.strip()
+    if key == "":
+      continue
+
+    data_type, value = get_datatype_and_value(data_object)
+
+    valid = True
+
+    # Based on value_type, cast to appropriate value
+    # if data_type == "N":
+    #   valid, casted_output_value = process_number(output_value.strip())
+    # elif data_type == "BOOL":
+    #   valid, casted_output_value = process_bool(output_value.strip())
+    # elif data_type == "S":
+    #   valid, casted_output_value = process_string(output_value.strip())
+
+    if data_type in ["N", "BOOL", "S"]:
+      valid, casted_output_value = process_nbs(data_type, value)
+    elif data_type == "NULL":
+      valid, casted_output_value = process_null(value.strip())
+    elif data_type == "L":
+      valid, casted_output_value = process_list(value)
+
+    if valid:
+      output_json_object[key] = casted_output_value
+
+  return output_json_object
+
+
+# ======= Main =========
 
 input_json_object = read_input(filepath)
 # print_json_object(input_json_object)
 
-for key, data in input_json_object.items():
-  # print(key, value)
-
-  key = key.strip()
-  if key == "":
-    continue
-
-  data_type = list(data.keys())[0]
-  output_value = data[data_type]
-
-  valid = True
-
-  # Based on value_type, cast to appropriate value
-  # if data_type == "N":
-  #   valid, casted_output_value = process_number(output_value.strip())
-  # elif data_type == "BOOL":
-  #   valid, casted_output_value = process_bool(output_value.strip())
-  # elif data_type == "S":
-  #   valid, casted_output_value = process_string(output_value.strip())
-
-  if data_type in ["N", "BOOL", "S"]:
-    valid, casted_output_value = process_nbs(data_type, output_value)
-  elif data_type == "NULL":
-    valid, casted_output_value = process_null(output_value.strip())
-  elif data_type == "L":
-    valid, casted_output_value = process_list(output_value)
-
-  if valid:
-    output_json_object[key] = casted_output_value
+# transformed json object
+transformed_json_object = transform_json_object(input_json_object)
 
 # Print output
-print_json_object(output_json_object)
+print_json_object(transformed_json_object)
