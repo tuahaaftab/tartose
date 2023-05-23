@@ -1,18 +1,17 @@
 import re
 import json
 from datetime import datetime
+from collections import OrderedDict
 
-# filepath = "./inputs/sample_input.json"
-filepath = "./inputs/custom_input.json"
+filepath = "./inputs/sample_input.json"
+# filepath = "./inputs/custom_input.json"
 
 
 def has_rfc3339_format(string):
   pattern = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z"
   match = re.search(pattern, string)
 
-  if match:
-    return True
-  return False
+  return True if match else False
 
 
 def rfc3339_to_epoch(rfc3339_string):
@@ -116,7 +115,7 @@ def process_list(l):
 
   if len(output_data_list) == 0:
     return (False, None)
-    
+
   return (True, output_data_list)
 
 
@@ -133,6 +132,17 @@ def process_nbs(data_type, output_value):
   return (False, None)
 
 
+def sort_map(output_json_object, output_keys):
+
+  sorted_output_json_object = OrderedDict()
+
+  sorted_output_keys = sorted(output_keys)
+  for key in sorted_output_keys:
+    sorted_output_json_object[key] = output_json_object[key]
+
+  return sorted_output_json_object
+
+
 def transform_json_object(input_json_object):
 
   output_json_object = {}
@@ -147,34 +157,37 @@ def transform_json_object(input_json_object):
 
     valid = True
 
-    # Based on value_type, cast to appropriate value
-    # if data_type == "N":
-    #   valid, casted_output_value = process_number(output_value.strip())
-    # elif data_type == "BOOL":
-    #   valid, casted_output_value = process_bool(output_value.strip())
-    # elif data_type == "S":
-    #   valid, casted_output_value = process_string(output_value.strip())
-
     if data_type in ["N", "BOOL", "S"]:
       valid, casted_output_value = process_nbs(data_type, value)
     elif data_type == "NULL":
       valid, casted_output_value = process_null(value.strip())
     elif data_type == "L":
       valid, casted_output_value = process_list(value)
+    elif data_type == "M":
+      valid, casted_output_value = transform_json_object(value)
 
     if valid:
       output_json_object[key] = casted_output_value
 
-  return output_json_object
+  output_keys = list(output_json_object.keys())
+
+  if len(output_keys) == 0:
+    return False, output_json_object
+
+  sorted_output_json_object = sort_map(output_json_object, output_keys)
+
+  return True, sorted_output_json_object
 
 
-# ======= Main =========
+# ============================ Main ==============================
 
+# read input json object
 input_json_object = read_input(filepath)
-# print_json_object(input_json_object)
 
-# transformed json object
-transformed_json_object = transform_json_object(input_json_object)
+# transform json object
+valid, transformed_json_object = transform_json_object(input_json_object)
 
-# Print output
+transformed_json_object = [transformed_json_object]  # to match output
+
+# print transformed json object
 print_json_object(transformed_json_object)
