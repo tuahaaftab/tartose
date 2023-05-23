@@ -5,6 +5,7 @@ from datetime import datetime
 # filepath = "./inputs/sample_input.json"
 filepath = "./inputs/custom_input.json"
 
+
 def has_rfc3339_format(string):
   pattern = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z"
   match = re.search(pattern, string)
@@ -103,6 +104,19 @@ def process_list(l):
   return (True, l)
 
 
+def process_nbs(data_type, output_value):
+  output_value = output_value.strip()
+
+  if data_type == "N":
+    return process_number(output_value)
+  elif data_type == "BOOL":
+    return process_bool(output_value)
+  elif data_type == "S":
+    return process_string(output_value)
+
+  return (False, None)
+
+
 # Main
 
 # transformed json object
@@ -124,12 +138,15 @@ for key, data in input_json_object.items():
   valid = True
 
   # Based on value_type, cast to appropriate value
-  if data_type == "N":
-    valid, casted_output_value = process_number(output_value.strip())
-  elif data_type == "BOOL":
-    valid, casted_output_value = process_bool(output_value.strip())
-  elif data_type == "S":
-    valid, casted_output_value = process_string(output_value.strip())
+  # if data_type == "N":
+  #   valid, casted_output_value = process_number(output_value.strip())
+  # elif data_type == "BOOL":
+  #   valid, casted_output_value = process_bool(output_value.strip())
+  # elif data_type == "S":
+  #   valid, casted_output_value = process_string(output_value.strip())
+
+  if data_type in ["N", "BOOL", "S"]:
+    valid, casted_output_value = process_nbs(data_type, output_value)
   elif data_type == "NULL":
     valid, casted_output_value = process_null(output_value.strip())
   elif data_type == "L":
