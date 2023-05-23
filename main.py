@@ -4,9 +4,30 @@ from datetime import datetime
 from collections import OrderedDict
 
 filepath = "./inputs/sample_input.json"
+
 # filepath = "./inputs/custom_input.json"
 
 
+# ============================ JSON Handlers ==============================
+def read_input(filepath):
+  with open(filepath, 'r') as f:
+    data = json.load(f)
+    return data
+
+
+def print_json_object(json_object):
+  json_formatted_str = json.dumps(json_object, indent=2)
+  print(json_formatted_str)
+
+
+def get_datatype_and_value(data_object):
+  data_type = list(data_object.keys())[0]
+  value = data_object[data_type]
+
+  return data_type, value
+
+
+# ============================ Time and Epoch ==============================
 def has_rfc3339_format(string):
   pattern = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z"
   match = re.search(pattern, string)
@@ -20,19 +41,7 @@ def rfc3339_to_epoch(rfc3339_string):
   return int(dt.timestamp())
 
 
-def print_json_object(json_object):
-  json_formatted_str = json.dumps(json_object, indent=2)
-  print(json_formatted_str)
-
-
-# Read input json
-def read_input(filepath):
-  with open(filepath, 'r') as f:
-    data = json.load(f)
-    return data
-
-
-# Process String
+# ============================ Transformations ==============================
 def process_string(s):
   valid = True
 
@@ -44,7 +53,6 @@ def process_string(s):
   return (valid, s)
 
 
-# Process Number
 def process_number(s):
   if s == "":
     return (False, s)
@@ -69,7 +77,6 @@ true_values = ["1", "t", "T", "TRUE", "true", "True"]
 false_values = ["0", "f", "F", "FALSE", "false", "False"]
 
 
-# Process Boolean
 def process_bool(s):
 
   s = s.strip()
@@ -82,7 +89,6 @@ def process_bool(s):
     return (False, None)
 
 
-# Process Null
 def process_null(s):
   if s in true_values:
     return (True, None)
@@ -90,36 +96,9 @@ def process_null(s):
     return (False, s)
 
 
-def get_datatype_and_value(data_object):
-  data_type = list(data_object.keys())[0]
-  value = data_object[data_type]
-
-  return data_type, value
-
-
-# Process List
-def process_list(l):
-  # Empty List | "L": "noop" | Expecting square brackets "L": ["noop"]
-  if not isinstance(l, list):
-    return (False, l)
-
-  output_data_list = []
-
-  for data_object in l:
-    if isinstance(data_object, dict):
-      data_type, value = get_datatype_and_value(data_object)
-      valid, casted_output_value = process_nbs(data_type, value)
-
-      if valid:
-        output_data_list.append(casted_output_value)
-
-  if len(output_data_list) == 0:
-    return (False, None)
-
-  return (True, output_data_list)
-
-
-def process_nbs(data_type, output_value):
+# DRY principle: This function is utilized in multiple places
+# Process String, Number, Bool
+def process_snb(data_type, output_value):
   output_value = output_value.strip()
 
   if data_type == "N":
@@ -130,6 +109,26 @@ def process_nbs(data_type, output_value):
     return process_string(output_value)
 
   return (False, None)
+
+
+def process_list(l):
+  if not isinstance(l, list):
+    return (False, l)
+
+  output_data_list = []
+
+  for data_object in l:
+    if isinstance(data_object, dict):
+      data_type, value = get_datatype_and_value(data_object)
+      valid, casted_output_value = process_snb(data_type, value)
+
+      if valid:
+        output_data_list.append(casted_output_value)
+
+  if len(output_data_list) == 0:
+    return (False, None)
+
+  return (True, output_data_list)
 
 
 def sort_map(output_json_object, output_keys):
@@ -155,10 +154,10 @@ def transform_json_object(input_json_object):
 
     data_type, value = get_datatype_and_value(data_object)
 
-    valid = True
+    valid = True 
 
     if data_type in ["N", "BOOL", "S"]:
-      valid, casted_output_value = process_nbs(data_type, value)
+      valid, casted_output_value = process_snb(data_type, value)
     elif data_type == "NULL":
       valid, casted_output_value = process_null(value.strip())
     elif data_type == "L":
